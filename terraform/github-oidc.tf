@@ -1,6 +1,12 @@
 # -----------------------------------------------------------------------------
 # GitHub Actions OIDC: keyless deploys from the main branch of this repo only
 # -----------------------------------------------------------------------------
+locals {
+  github_owner_name          = split("/", var.github_repository)[0]
+  github_repository_name     = split("/", var.github_repository)[1]
+  github_oidc_subject_prefix = "repo:${local.github_owner_name}@${var.github_owner_id}/${local.github_repository_name}@${var.github_repository_id}"
+}
+
 resource "aws_iam_openid_connect_provider" "github" {
   url            = "https://token.actions.githubusercontent.com"
   client_id_list = ["sts.amazonaws.com"]
@@ -32,11 +38,14 @@ data "aws_iam_policy_document" "github_actions_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Exact match: only pushes to main can assume the role (no PRs, tags or forks)
+    # Exact match: only pushes to main can assume the role (no PRs, tags or forks).
+    # This repo uses GitHub's immutable subject format, which embeds the owner and
+    # repository IDs ("repo:owner@<id>/name@<id>:..."), so a deleted and re-created
+    # repo with the same name cannot assume the role.
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:ref:refs/heads/main"]
+      values   = ["${local.github_oidc_subject_prefix}:ref:refs/heads/main"]
     }
   }
 }

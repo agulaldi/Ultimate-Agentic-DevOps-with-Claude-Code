@@ -27,3 +27,15 @@ variable "github_repository" {
   type        = string
   default     = "agulaldi/Ultimate-Agentic-DevOps-with-Claude-Code"
 }
+
+variable "github_owner_id" {
+  description = "Numeric ID of the GitHub repository owner (used in the immutable OIDC subject)"
+  type        = number
+  default     = 129971097
+}
+
+variable "github_repository_id" {
+  description = "Numeric ID of the GitHub repository (used in the immutable OIDC subject)"
+  type        = number
+  default     = 1391382595
+}

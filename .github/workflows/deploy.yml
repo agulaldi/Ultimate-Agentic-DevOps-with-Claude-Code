@@ -9,6 +9,18 @@ permissions:
   id-token: write
   contents: read
 
+# Never run two deploys at once; a newer push waits for the current one
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+# Values from `terraform output` (terraform/outputs.tf)
+env:
+  AWS_REGION: us-east-1
+  AWS_ROLE_ARN: arn:aws:iam::373550664081:role/agulaldi-portfolio1-github-actions-deploy
+  S3_BUCKET: agulaldi-portfolio1-373550664081
+  CLOUDFRONT_DISTRIBUTION_ID: ET8BRQ6DKGTWV
+
 jobs:
   deploy:
     name: Sync to S3 + Invalidate CloudFront
@@ -21,23 +33,24 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::533267262133:role/github-actions-deploy
-          aws-region: eu-north-1
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Sync site to S3
         run: |
-          aws s3 sync . s3://pravinmishradmi-site-production \
+          aws s3 sync . "s3://${S3_BUCKET}" \
             --delete \
             --exclude ".git/*" \
             --exclude ".github/*" \
             --exclude ".claude/*" \
             --exclude "terraform/*" \
             --exclude ".mcp.json" \
+            --exclude ".gitignore" \
             --exclude "*.md" \
-            --exclude "CLAUDE.md"
+            --exclude ".DS_Store"
 
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id E3V6O6MRE2E21P \
+            --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" \
             --paths "/*"

@@ -1,0 +1,1 @@
+- [TF audit patterns](project_tf_audit_patterns.md) — recurring gaps: OIDC not in TF, workflow/TF drift, no headers policy

@@ -1,0 +1,1 @@
+- [Site external origins / CSP](project_site_external_origins.md) — cdnjs + udemycdn allowlisted in CSP; onclick handlers reference undefined JS
